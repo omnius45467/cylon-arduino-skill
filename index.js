@@ -1,11 +1,11 @@
 var alexa = require('alexa-app');
 var app = new alexa.app();
-
+var getUrl = require('request');
 /**
  * LaunchRequest.
  */
 app.launch(function(request,response) {
-	response.say('Hey there fancy pants!');
+	response.say('Resistance is futile');
 	response.card("Hey there fancy pants!","This is an example card");
 });
 
@@ -13,45 +13,60 @@ app.launch(function(request,response) {
 /**
  * IntentRequest.
  */
-app.intent('number',
+app.intent('OnIntent',
   {
-    'slots':{'number':'NUMBER'},
-    'utterances':[ 'say the number {1-100|number}' ]
+    'utterances':[ 'turn the light on' ]
   },
   function(request,response) {
-    var number = request.slot('number');
-    response.say('You asked for the number '+number);
-    response.shouldEndSession(true);
-    response.send();
+	  console.log('On intent');
+	getUrl('https://e1c0e79f.ngrok.io/api/robots/omnius/commands/on', function(err, Response, body){
+		console.log(Response);
+		if(!err){
+			console.log(body, Response);
+			response.say('turning the light on, by your command');
+			response.shouldEndSession(true);
+			response.send();
+		}else{
+			console.log(body, Response);
+			response.say('I encountered a problem');
+			response.shouldEndSession(true);
+			response.send();
+		}
+	});
+	  return false;
+  }
+);
+app.intent('OffIntent',
+  {
+    'utterances':[ 'turn the light off' ]
+  },
+  function(request,response) {
+	  console.log('Off Intent');
+	  getUrl("https://e1c0e79f.ngrok.io/api/robots/omnius/commands/off", function(err, Response, body){
+		  console.log(Response);
+	 	if(!err){
+			console.log(body, Response);
+			response.say('turning the light off, by your command');
+			response.shouldEndSession(true);
+			response.send();
+		} else{
+			console.log(body, Response);
+			response.say('something went wrong');
+			response.shouldEndSession(true);
+			response.send();
+		}
+	  });
+	return false;
   }
 );
 
-
-/**
- * IntentRequest w/ asynchronous response.
- */
-app.intent('checkStatus', 
-	{
-    	'utterances':[ 
-    		'status check', 'what is the status', 'tell me the status'
-    	]
-  	},
-	function(request,response) {
-		setTimeout(function() {		// simulate an async request
-
-	        // This is async and will run after a brief delay
-	        response.say('Status is operational, mam!');
-	    
-	        // Must call send to end the original request
-	        response.send();
-		
-		}, 250);
-
-	    // Return false immediately so alexa-app doesn't send the response
-	    return false;
-	}
-);
-
+app.intent('EndIntent',
+	function (request, response) {
+		response.say('stopping, by your command');
+		response.shouldEndSession(true);
+		response.send();
+		return false;
+	});
 
 /**
  * Error handler for any thrown errors.
